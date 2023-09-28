@@ -1,0 +1,26 @@
+{
+  "name": "locally",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/jest": "^29.5.3",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "^20.6.2",
+    "chai": "^4.3.8",
+    "mocha": "^10.2.0",
+    "sinon": "^15.2.0"
+  },
+  "dependencies": {
+    "commander": "^11.0.0",
+    "crypto-js": "^4.1.1",
+    "lodash": "^4.17.21",
+    "prisma": "^5.1.1",
+    "uuid": "^9.0.0"
+  }
+}
