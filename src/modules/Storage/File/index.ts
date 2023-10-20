@@ -15,6 +15,15 @@ export default class File implements StorageInterface {
     })
   }
 
+  async remove (path:string ) {
+    return new Promise(async (res, rej) => {
+      await fs.unlink(path, (err) => {
+        if (err) rej(1)
+      })
+      res(1)
+    });
+  }
+
   async isExist(path: string) {
     return new Promise((res, rej) => {
       fs.access(path, fs.constants.F_OK, (err) => {

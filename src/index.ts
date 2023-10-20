@@ -3,9 +3,10 @@ import { v4 } from "uuid";
 import Model from "./modules/Model";
 import Storage from "./modules/Storage/Storage";
 import Encryptor from "./modules/Encryptor/index";
-import util from "util";
+
 export default class Locally implements AppInterface {
   public id;
+  public status;
   private _models = {};
   private storage;
   private hash;
@@ -23,10 +24,12 @@ export default class Locally implements AppInterface {
   private capture: any = {
     doesConfigExist: false,
   };
+
   constructor(public config: LocallyConfig) {
     this.config = Object.assign(this._defaults, this.config);
     this.configure();
     this.id = v4();
+    this.status = "ok"
   }
 
   get conf() {
@@ -58,9 +61,9 @@ export default class Locally implements AppInterface {
     if (this.models[name]) throw new Error(`model [${name}] already exists`);
   }
 
-  createModel(name, options = {}) {
-    this.validateModels(name, options);
-    let model = new Model(name, this.config, options);
+  createModel(name, schema = {}, options = {}) {
+    this.validateModels(name, schema);
+    let model = new Model(name, this.config, schema, options);
     this._models[name] = model;
     return model;
   }
@@ -77,6 +80,7 @@ export default class Locally implements AppInterface {
   validateStrKey(str1, str2) {
     return str1 === str2;
   }
+  
   async loadConfig() {
     try {
       let configs = await this.storage.read({ name: this.conf });
@@ -98,20 +102,22 @@ export default class Locally implements AppInterface {
     await this.storage.write({ name: this.conf }, mainData);
   }
 
+  async reset () {
+    await this.storage.remove({ name: this.conf });
+  }
+
   async initialize() {
     this.capture.doesConfigExist = await this.storage.isExist(this.conf);
     if (this.config.loadConfig) {
-      if (this.capture.doesConfigExist) {
+      if (this.capture.doesConfigExist && !this.config.force) {
         let oldconfig = (await this.loadConfig())?.config;
-        if (!this.validateStrKey(oldconfig.hash.key, this.config.hash.key)) {
+        if (!this.validateStrKey(oldconfig?.hash?.key, this.config?.hash?.key) ) {
           throw new Error("invalid key provided");
         }
-        if (this.config.force) await this.writeConfig();
         this.config = oldconfig;
-      } else await this.writeConfig();
-    } else {
-      await this.writeConfig();
+      }
     }
+    await this.writeConfig();
   }
 
   static async init(config: LocallyConfig) {

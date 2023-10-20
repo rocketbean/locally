@@ -1,36 +1,43 @@
 import { v4 } from "uuid"
+import Operations from "./Operations";
+export type modelProperty = {
+  [key: string]: {
+    /**
+     * property datatype 
+     */
+    type: any,
+    /**
+     * defaults to false;
+     * model will throw a missing
+     * required field error
+     * if property is missing
+     * in the data when enabled.
+     */
+    required?: Boolean
+  }
+}
 
-export default class Model {
-  private id;
+export default class Model extends Operations{
 
-  public defaultProperty = {
+  private defaultProperty = {
     __id: {
-      type: "",
-    },
-    __created: {
-      type: 0,
-    },
-    __updated: {
-      type: 0,
+      type: String,
     },
   };
-  public properties = {};
-  private data = [];
+  
+  properties: modelProperty = {};
   constructor(public name, private appConfig, private _properties, private options = {}) {
-    this.loadProps(Object.assign(this.defaultProperty, this._properties.schema))
+    super()
+    this.setup()
+    this.loadProps(Object.assign(this.defaultProperty, this._properties))
   }
 
-  private writeContent() {
-
-  }
-
-  private getWrittenContent() {
-    return this.data;
-  }
 
   loadProps(props) {
     Object.keys(props).map(key => {
-      this.properties[key] = typeof props[key].type
+      this.properties[key] = props[key]
     })
   }
+
 }
+

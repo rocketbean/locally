@@ -56,7 +56,14 @@ export default class Storage {
     return await this.writer.read(newPath);
   }
 
-  async isExist(filepath, data: any) {
+  async remove(connection) {
+    if(this.isExist(connection.name)) {
+      let newPath = path.join(this.config.basePath, this.config.path, connection.name)
+      return await this.writer.remove(newPath);
+    }
+  }
+
+  async isExist(filepath) {
     try {
       let newPath = path.join(this.config.basePath, this.config.path)
       return await this.writer.isExist(path.join(newPath, filepath))
