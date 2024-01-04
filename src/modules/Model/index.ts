@@ -17,7 +17,7 @@ export type modelProperty = {
   }
 }
 
-export default class Model extends Operations{
+export default class Model extends Operations {
 
   private defaultProperty = {
     __id: {
@@ -25,6 +25,7 @@ export default class Model extends Operations{
     },
   };
   
+  private app;
   properties: modelProperty = {};
   constructor(public name, private appConfig, private _properties, private options = {}) {
     super()
@@ -32,11 +33,22 @@ export default class Model extends Operations{
     this.loadProps(Object.assign(this.defaultProperty, this._properties))
   }
 
+  get meta() {
+    return {}
+  }
 
   loadProps(props) {
     Object.keys(props).map(key => {
       this.properties[key] = props[key]
     })
+  }
+
+  appSynch(app) {
+    this.app = app;
+  }
+
+  async save() {
+    await this.app.save()
   }
 
 }

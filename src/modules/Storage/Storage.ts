@@ -51,22 +51,28 @@ export default class Storage {
     await this.writer.write(path.join(newPath, connection.name), data)
   }
 
+  async writeRaw(connection, data: any) {
+    await this.writer.write(connection, data)
+  }
+
   async read(connection) {
     let newPath = path.join(this.config.basePath, this.config.path, connection.name)
     return await this.writer.read(newPath);
   }
 
-  async remove(connection) {
-    if(this.isExist(connection.name)) {
-      let newPath = path.join(this.config.basePath, this.config.path, connection.name)
-      return await this.writer.remove(newPath);
-    }
+  async readRaw(connection: any) {
+    return await this.writer.read(connection);
+
   }
 
-  async isExist(filepath) {
+  async remove(connection) {
+    return await this.writer.remove(connection);
+
+  }
+
+  async isExist(connection) {
     try {
-      let newPath = path.join(this.config.basePath, this.config.path)
-      return await this.writer.isExist(path.join(newPath, filepath))
+      return await this.writer.isExist(connection)
     } catch (e) {
       return false;
     }

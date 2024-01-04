@@ -1,28 +1,22 @@
 import { modelProperty } from ".";
 import { MismatchError, RequirementError } from "./Error"
+
+const __priv = ["defaultProperty", "appConfig", "_properties", "properties", "data"];
 export default class Operations {
   private data = [];
   properties: modelProperty = {};
   private keys = []
 
+  get metadata() {
+    return this.data;
+  }
+
   setup() {
-    Object.defineProperties(this, {
-      defaultProperty: {
+    __priv.map(prop => {
+      Reflect.defineProperty(this, prop, {
         enumerable: false
-      },
-      appConfig: {
-        enumerable: false
-      },
-      _properties: {
-        enumerable: false
-      },
-      properties: {
-        enumerable: false
-      },
-      data: {
-        enumerable: false
-      }
-    });
+      })
+    })
   }
 
   get storage() {
@@ -62,6 +56,7 @@ export default class Operations {
     let storage = this.storage;
     storage.push(this.validate(data));
     this.storage = storage
+    await this.save()
   }
 
   async delete(finder: any) {
@@ -81,6 +76,7 @@ export default class Operations {
     let storage = this.storage
     storage.splice(data?.__index__, 1);
     this.storage = storage;
+    await this.save()
   }
 
   async update(finder: any, newProperty: object) {
@@ -103,6 +99,7 @@ export default class Operations {
       storage[data?.__index__] = newData;
       this.storage = storage;
     }
+    await this.save()
   }
 
   async find(finder: any, showIndex: boolean = false) {
@@ -128,4 +125,7 @@ export default class Operations {
   async reset() {
     this.data = []
   }
+
+  async save() { }
+
 }

@@ -1,0 +1,1 @@
+{"enabled":true,"storage":{"driver":"file","path":"./store"},"name":"test","loadConfig":true,"force":false,"hash":{"key":"test","shakeCount":1,"enabled":false}}

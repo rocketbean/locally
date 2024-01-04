@@ -2,6 +2,12 @@ import { EncryptorConfig } from "./modules/Encryptor/index"
 import {StorageConfig} from "./modules/Storage/Storage"
 export interface AppInterface { }
 export type LocallyConfig = {
+    /**
+     * String 
+     * connection name;
+     */
+    name: string,
+
     /** Boolean
      * enables/disables the app
      * defaults to true

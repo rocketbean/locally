@@ -24,11 +24,17 @@ export default class Encryptor {
   }
 
   encrypt(data: any = '') {
-    return this.driver.encrypt(data)
+    if (this.config.enabled) 
+      return this.driver.encrypt(data)
+    else return data;
   }
 
   decrypt(data: any) {
-    return this.driver.decrypt(data)
+    try {
+      return this.driver.decrypt(data)
+    } catch (e) {
+      return false
+    }
   }
 
   JsonParser(str) {
