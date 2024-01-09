@@ -14,9 +14,15 @@ export class RequirementError extends OperationError {
 }
 
 export class MismatchError extends OperationError {
-
   constructor(key = '') {
     super()
     this.message = `${this.name}::DataType mismatch for (${key})`
+  }
+}
+
+export class DuplicateError extends OperationError {
+  constructor(key = '') {
+    super()
+    this.message = `${this.name}::data already exist (${key})`
   }
 }

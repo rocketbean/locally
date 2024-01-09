@@ -1,4 +1,4 @@
-import { AppInterface, LocallyConfig } from "./locally";
+import { AppInterface, LocallyConfig, AppInformation } from "./locally";
 import Storage from "./modules/Storage/Storage";
 import Encryptor from "./modules/Encryptor/index";
 import Authenticator from "./modules/Authenticator";
@@ -17,7 +17,7 @@ export default class Handler {
   private storage: Storage;
   status: string = "initiated";
   errors: []
-  constructor(config: LocallyConfig) {
+  constructor(config: LocallyConfig, public synch: any) {
     this._config.input = config;
     this.configure()
   }
@@ -62,10 +62,10 @@ export default class Handler {
     if (typeof curr !== "object")
       throw new Error("config cannot be parsed")
     this.authenticator.authenticate(curr.hash)
+    this.synch.setter(curr.app);
   }
 
   async saveConfig() {
-    let serData = this.serializeData(this.current)
     await this.storage.writeRaw({
       path: this.current.storage.path,
       filename: this.configFileName
@@ -73,10 +73,14 @@ export default class Handler {
   }
 
   serializeData(data: any) {
-    if (this.current.hash?.enabled) {
-      return this.hash.encrypt(data);
+    let _data = {
+      ...data,
+      app: this.synch.getter(),
     }
-    return JSON.stringify(data);
+    if (this.current.hash?.enabled) {
+      return this.hash.encrypt(_data);
+    }
+    return JSON.stringify(_data, null, 2);
   }
 
 
@@ -99,14 +103,22 @@ export default class Handler {
   }
 
   async connect() {
-    this._config.current = this._config.input
-    await this.loadPrevConfiguration()
+    try {
+      this._config.current = this._config.input
+      await this.loadPrevConfiguration();
+    } catch (e: any) {
+      if (e.message.includes("CONERR")) {
+        throw e;
+      } else {
+        throw new Error("AUTHERR::invalid credentials")
+      }
+    }
   }
 
   async update(config: any) {
     if (typeof this._config.current !== "string")
       this._config.input = Object.assign(this._config.current, config)
-    this.configure()
+    this.configure();
     await this.saveConfig()
   }
 
@@ -134,6 +146,7 @@ export default class Handler {
       return data;
     } catch (e: any) {
       if (e.errno == -2) throw new Error("CONERR::connection does not exist")
+      else throw e;
     }
   }
 

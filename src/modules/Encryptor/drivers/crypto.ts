@@ -29,23 +29,23 @@ export default class CryptoJs implements DriverInterface {
   }
 
   encrypt(str: string | object = '') {
-    let result = ''
     if (typeof str !== "string") {
       str = JSON.stringify(str, null, 2)
     }
     for (let index = 0; index < this.config.shakeCount; index++) {
-      result = this.process(str, "encrypt")
+      str = this.process(str, "encrypt");
+      str = str.toString();
     }
-    return result.toString() ?? result;
+
+    return str;
   }
 
-
   decrypt(str: any) {
-    let result;
     for (let index = 0; index < this.config.shakeCount; index++) {
-      result = this.process(str, "decrypt")
+      str = this.process(str, "decrypt")
+      str = str.toString(crypto.enc.Utf8);
     }
-    return result.toString(crypto.enc.Utf8);
+    return str;
   }
 
   process(str, method) {

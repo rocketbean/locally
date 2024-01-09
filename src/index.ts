@@ -1,11 +1,11 @@
-import { AppInterface, LocallyConfig } from "./locally";
+import { AppInterface, LocallyConfig, AppInformation } from "./locally";
 import { v4 } from "uuid";
 import Model from "./modules/Model";
 import Handler from "./Handler"
 
 export default class Locally implements AppInterface {
-  public id;
-  public status: "initiated" | "connected" | "destroyed" | "disconnected" = "disconnected";
+  private id;
+
   /** app status
    *  - Initiated
    * modules are loaded, 
@@ -18,9 +18,9 @@ export default class Locally implements AppInterface {
    * - Disconnected
    * no actions will be allowed.
    */
-  private storage;
-  private hash;
+  public status: "initiated" | "connected" | "destroyed" | "disconnected" = "disconnected";
   private _models = {};
+  private documents = {};
   private _defaults = {
     enabled: true,
     storage: {
@@ -29,23 +29,19 @@ export default class Locally implements AppInterface {
       basePath: `../${__dirname}`,
     },
   };
+
   private initiated: boolean = false;
   private handler: Handler;
-
   constructor(public config: LocallyConfig) {
-    this.config = Object.assign(this._defaults, this.config);
     this.id = v4();
+    this.config = Object.assign(this._defaults, this.config);
   }
 
   get meta() {
-    return {}
-  }
-
-  get publicData() {
     return {
       id: this.id,
-      config: { ...this.config },
-    };
+      name: this.config.name
+    }
   }
 
   getModel(modelname) {
@@ -60,23 +56,41 @@ export default class Locally implements AppInterface {
     if (this.models[name]) throw new Error(`model [${name}] already exists`);
   }
 
-  createModel(name, schema = {}, options = {}) {
+  async createModel(name, schema = {}, options = {}) {
     this.validateModels(name, schema);
-    let model = new Model(name, this.config, schema, options);
-    this.synchModel(model)
-    this._models[name] = model;
+    let model = new Model(name, schema, options, {
+      storage: this.handler.current.storage,
+      encryption: this.handler.current.hash,
+      app: this.meta
+    });
+    this.models[name] = model;
+    this.documents[name] = model.meta;
+    await this.handler.saveConfig();
+    await model.save()
     return model;
   }
 
-  synchModel(model) {
-    model.appSynch(this)
+  bindProperties(data) {
+    if (data?.id) {
+      this.id = data.id
+    }
+    if (data?.documents) this.documents = data.documents
+  }
+
+  getAppInfo() {
+    return {
+      id: this.id,
+      documents: this.documents,
+    }
   }
 
   async initialize() {
-    this.handler = new Handler(this.config);
+    this.handler = new Handler(this.config, {
+      setter: this.bindProperties.bind(this),
+      getter: this.getAppInfo.bind(this)
+    });
     this.status = "initiated";
   }
-
 
   static async init(config: LocallyConfig) {
     let app = new Locally(config);
@@ -91,15 +105,19 @@ export default class Locally implements AppInterface {
   }
 
   async connect() {
-    try {
       await this.handler.connect();
       this.status = "connected";
+    await this.loadDocumentModels()
       return {
         message: this.status
       }
-    } catch (e) {
-      throw e;
-    }
+  }
+
+  async loadDocumentModels() {
+    let models = await Promise.all(Object.keys(this.documents).map(async doc => {
+      this.models[doc] = await Model.load(doc, this.documents[doc]);
+    }))
+
   }
 
   async disconnect() {
@@ -128,6 +146,8 @@ export default class Locally implements AppInterface {
   }
 
   async reset() {
+    this._models = {}
+    this.documents = {}
     return;
   }
 }

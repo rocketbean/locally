@@ -1,1 +1,36 @@
-{"enabled":true,"storage":{"driver":"file","path":"./store"},"name":"test","loadConfig":true,"force":false,"hash":{"key":"test","shakeCount":1,"enabled":false}}
+{
+  "enabled": true,
+  "storage": {
+    "driver": "file",
+    "path": "./store"
+  },
+  "name": "test",
+  "loadConfig": true,
+  "force": false,
+  "hash": {
+    "key": "test",
+    "shakeCount": 1,
+    "enabled": false
+  },
+  "app": {
+    "id": "5d0d395e-b303-4710-8463-e70b49f0ce9c",
+    "documents": {
+      "test-model": {
+        "app": {
+          "id": "5d0d395e-b303-4710-8463-e70b49f0ce9c",
+          "name": "test"
+        },
+        "storage": {
+          "driver": "file",
+          "path": "store/models"
+        },
+        "encryption": {
+          "key": "test",
+          "shakeCount": 1,
+          "enabled": false
+        },
+        "status": 0
+      }
+    }
+  }
+}

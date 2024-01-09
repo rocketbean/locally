@@ -1,6 +1,21 @@
 import { EncryptorConfig } from "./modules/Encryptor/index"
 import {StorageConfig} from "./modules/Storage/Storage"
 export interface AppInterface { }
+
+export type AppInformation = {
+    /**
+    * String 
+    * app instance unique identification;
+    */
+    id: string,
+
+    /**
+    * Object 
+    * list of models registered 
+    * to the app;
+    */
+    models: object,
+}
 export type LocallyConfig = {
     /**
      * String 

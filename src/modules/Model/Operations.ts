@@ -1,7 +1,8 @@
 import { modelProperty } from ".";
-import { MismatchError, RequirementError } from "./Error"
+import { MismatchError, RequirementError, DuplicateError } from "./Error"
+import { dataTypes } from "./typeMatch";
+const __priv = ["defaultProperty", "properties", "data"];
 
-const __priv = ["defaultProperty", "appConfig", "_properties", "properties", "data"];
 export default class Operations {
   private data = [];
   properties: modelProperty = {};
@@ -19,11 +20,24 @@ export default class Operations {
     })
   }
 
-  get storage() {
+  get container() {
     return JSON.parse(JSON.stringify(this.data));
   }
 
-  set storage(data: any) {
+  set container(data: any) {
+    this.data = data;
+  }
+
+
+  get document() {
+    return {
+      keys: this.keys,
+      properties: this.properties,
+      data: this.container,
+    }
+  }
+
+  loadData(data) {
     this.data = data;
   }
 
@@ -31,6 +45,11 @@ export default class Operations {
     Object.keys(this.properties).forEach(key => {
       if (this.properties[key]?.required) {
         if (!data[key]) throw new MismatchError(key)
+      }
+      if (this.properties[key]?.unique) {
+        if (this.find({ [key]: data[key] })) {
+          throw new DuplicateError(`${key}: ${data[key]}`)
+        }
       }
       if (data[key]) {
         if (!this.typeMatch(this.properties[key].type, data[key])) {
@@ -42,21 +61,23 @@ export default class Operations {
   }
 
   typeMatch(propKey, dataKey) {
-    return propKey.name.toLowerCase() == (typeof dataKey).toLowerCase()
+    return propKey.toLowerCase() == (typeof dataKey).toLowerCase()
   }
 
   async create(data: Object | Array<Object>): Promise<void> {
     if (Array.isArray(data)) {
       Promise.all(data.map(async (d) => await this.pushData(d)))
+      await this.save()
+    } else {
+      await this.pushData(data)
+      await this.save();
     }
-    else await this.pushData(data)
   }
 
   async pushData(data: Object) {
-    let storage = this.storage;
-    storage.push(this.validate(data));
-    this.storage = storage
-    await this.save()
+    let container = this.container;
+    container.push(this.validate(data));
+    this.container = container
   }
 
   async delete(finder: any) {
@@ -73,9 +94,9 @@ export default class Operations {
   }
 
   async removeData(data) {
-    let storage = this.storage
-    storage.splice(data?.__index__, 1);
-    this.storage = storage;
+    let container = this.container
+    container.splice(data?.__index__, 1);
+    this.container = container;
     await this.save()
   }
 
@@ -94,17 +115,17 @@ export default class Operations {
 
   async updateData(data: any, newProperty: object) {
     if (data) {
-      let storage = this.storage;
-      let newData = this.validate(Object.assign(storage[data?.__index__], newProperty));
-      storage[data?.__index__] = newData;
-      this.storage = storage;
+      let container = this.container;
+      let newData = this.validate(Object.assign(container[data?.__index__], newProperty));
+      container[data?.__index__] = newData;
+      this.container = container;
     }
     await this.save()
   }
 
-  async find(finder: any, showIndex: boolean = false) {
+  find(finder: any, showIndex: boolean = false) {
     let keys = Object.keys(finder)
-    let collection = this.storage.filter((prop, index) => {
+    let collection = this.container.filter((prop, index) => {
       if (this.onEvery(keys, prop, finder)) {
         if (showIndex) prop.__index__ = index;
         return prop;
